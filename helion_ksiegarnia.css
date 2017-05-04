@@ -1,0 +1,152 @@
+#hk_module {
+    font-family: verdana !important;
+    font-size:11px !important;
+}
+
+h2.hk_title {
+    color:orange;
+}
+
+.hk_cena {
+    color:#d00;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.hk_book,.hk_book_desc {
+    color:#333;
+    display:block;
+    font-size: 11px;
+    vertical-align: top;
+}
+
+
+#hk_wyszukiwarka * {
+    background-color: inherit;
+    font-size: 11px;
+    padding:0px;
+    white-space: nowrap;
+}
+
+#hk_wyszukiwarka input[type=text] {
+    height:21px;
+    top: 2px;
+    position:relative;
+    margin-right:15px;
+}
+
+#hk_wyszukiwarka_submit {
+    padding-top:10px;
+    width:100%;
+}
+
+.hk_checked {
+    color:orange;
+}
+
+.hk_checked_box {
+    background-color: orange;
+}
+
+.hk_checked_box > a{
+    color:#fff;
+}
+
+
+/* PONIZEJ UMIESZCZAMY ZMIANY POZYCJI I WIELKOSCI */
+
+.pager {
+    margin-bottom:30px;
+}
+
+.pager > .item {
+    border:1px solid #f6f6f6;
+    display:inline-block;
+    padding:5px;
+    height:15px;
+    margin-right:5px;
+    margin-bottom:4px;
+    text-align: center;
+    width:25px;
+}
+
+.pager > .item > a {
+    padding:5px;    
+}
+
+.hk-page-per-page {
+    display: none;
+}
+
+
+.hk_line_through {
+    text-decoration: line-through;
+}
+
+.hk_box {
+    margin-bottom: 20px;
+}
+
+.hk_basket,.hk_basket_desc {
+    position:absolute;
+    margin-top:152px;
+}
+
+.hk_basket_desc {
+    margin-top:260px;
+}
+
+.hk_book_single {
+    text-align: center;
+}
+
+.hk_book_single .hk_basket {
+    position: relative;
+    margin-top: 0px;
+}
+
+.hk_book,.hk_book_desc {
+   display:inline-block;    
+   min-height:176px;
+   margin-bottom: 60px;
+   vertical-align: top;
+   width:50%;
+   
+}    
+
+span.hk_label {
+    font-weight: bold;
+}
+
+.hk_book_desc {
+    width:100%;
+}
+
+.hk_cover img {
+    border:0px;
+    height:176px;
+    vertical-align: top;
+    width:120px;
+}
+
+.hk_cover_desc img {    
+    width:200px;
+}
+
+.hk_cover,.hk_cover_desc,.hk_desc {
+    display:inline-block;
+    vertical-align: top;    
+    width:39%;
+}
+
+.hk_desc {
+    width:58%;
+}
+
+.readmore {
+    float:right;
+}
+
+.hk_books_hidden_1,.hk_books_hidden_2 {
+    display:none;
+}

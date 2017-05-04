@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * @file
+ * Install file
+ */
+function helion_ksiegarnia_enable() {
+    $wydawnictwa = array(
+        'helion' => t('helion'),
+        'onepress' => t('onepress'),
+        'ebookpoint' => t('ebookpoint'),
+        'sensus' => t('sensus'),
+        'septem' => t('septem'),
+        'bezdroza' => t('bezdroza'),
+    );
+
+    variable_set('wydawnictwa', $wydawnictwa);
+    variable_set('helion_ksiegarnia_kategoria_ksiazki', array("wszystkie" => "wszystkie"));
+
+    include_once drupal_get_path("module", "helion_ksiegarnia") . "/" . 'helion_ksiegarnia_update.php';
+    $helion_ksiegarnia_update = new helion_ksiegarnia_update();
+    $helion_ksiegarnia_update->updateCategories();
+}
+
+function helion_ksiegarnia_disable() {
+    include_once drupal_get_path("module", "helion_ksiegarnia") . "/" . 'cache.php';
+    $cache = new cache();
+    $cache->removeCacheDir();
+}
+
+function helion_ksiegarnia_uninstall() {
+    db_query("DELETE FROM {variable} WHERE name LIKE 'helion_%'");
+    cache_clear_all('variables', 'cache');
+    @rmdir(sys_get_temp_dir() . "/cache_helion_module");   
+}
+
+function helion_ksiegarnia_schema() {
+    $schema['helion_ksiegarnia'] = array(
+        'fields' => array(
+            'id' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+            'ident' => array('type' => 'varchar', 'length' => 20, 'not null' => TRUE),
+            'wydawnictwo' => array('type' => 'varchar', 'length' => 20, 'not null' => TRUE, 'default' => ''),
+            'marka' => array('type' => 'varchar', 'length' => 20, 'not null' => TRUE, 'default' => ''),
+            'tytul' => array('type' => 'varchar', 'length' => 255, 'not null' => FALSE),
+            'tytul_orginal' => array('type' => 'varchar', 'length' => 255, 'not null' => FALSE),
+            'autor' => array('type' => 'varchar', 'length' => 255, 'not null' => FALSE),
+            'tlumacz' => array('type' => 'text', 'size' => 'medium', 'not null' => FALSE),
+            'status' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0),
+            'cena' => array('type' => 'numeric', 'precision' => '5', 'scale' => 2, 'not null' => FALSE, 'default' => 0.00),
+            'cena_detaliczna' => array('type' => 'numeric', 'precision' => '5', 'scale' => 2, 'not null' => FALSE, 'default' => 0.00),
+            'znizka' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0),
+            'typ' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1),
+            'ebook_format' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'liczbastron' => array('type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'default' => 0),
+            'datawydania' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'okladka' => array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''),
+            'issueurl' => array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''),
+            'link' => array('type' => 'text', 'size' => 'medium', 'not null' => FALSE),
+            'bestseller' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0),
+            'nowosc' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0),
+            'opis' => array('type' => 'text', 'size' => 'medium', 'not null' => FALSE),
+            'kategorie' => array('type' => 'text', 'size' => 'medium', 'not null' => FALSE),
+            'promocja' => array('type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'default' => 0),
+            'oprawa' => array('type' => 'varchar', 'length' => 20, 'not null' => FALSE, 'default' => ''),
+        ),
+        'primary key' => array('id'),
+    );
+
+    $schema['helion_ksiegarnia_update'] = array(
+        'fields' => array(
+            'marka' => array('type' => 'varchar', 'length' => 20, 'not null' => TRUE, 'default' => ''),
+            'update_time' => array('type' => 'varchar', 'length' => 10, 'not null' => TRUE, 'default' => ''),
+        ),
+        'primary key' => array('marka'),
+    );
+
+    $schema['helion_ksiegarnia_kategorie'] = array(
+        'fields' => array(
+            'id' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+            'title' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'title_seo' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'title_id' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'grupa' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'grupa_seo' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'grupa_id' => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+            'opis' => array('type' => 'text', 'size' => 'medium', 'not null' => FALSE),
+            'marka' => array('type' => 'varchar', 'length' => 20, 'not null' => TRUE, 'default' => ''),
+        ),
+        'primary key' => array('id'),
+    );
+
+    return $schema;
+}
+

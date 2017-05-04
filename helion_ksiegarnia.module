@@ -1,0 +1,450 @@
+<?php
+
+define("helion_ksiegarnia", TRUE);
+define("HK_PATH", drupal_get_path("module", "helion_ksiegarnia") . "/");
+
+include_once HK_PATH . 'cache.php';
+include_once HK_PATH . 'helion_ksiegarnia_update.php';
+include_once(HK_PATH . "inc/functions.php");
+include_once(HK_PATH . "inc/blocks.php");
+
+function helion_ksiegarnia_menu() {
+    $items['ksiegarnia'] = array(
+        'title' => 'Księgarnia',
+        'page callback' => 'helion_ksiegarnia_init',
+        'weight' => -5,
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+    );
+
+    $items['ksiegarnia/error'] = array(
+        'title' => 'Tymczasowy brak dostępu do plików aktualizacji',
+        'page callback' => 'helion_ksiegarnia_error',
+        'weight' => -5,
+        'file' => 'helion_ksiegarnia.error.inc',
+        'file path' => HK_PATH,
+        'type' => MENU_CALLBACK,
+    );
+
+    $items['admin/config/ksiegarnia'] = array(
+        'title' => 'HELION - Księgarnia Internetowa',
+        'position' => 'right',
+        'weight' => -5,
+        'page callback' => 'system_admin_menu_block_page',
+        'access arguments' => array('administer site configuration'),
+        'file' => 'system.admin.inc',
+        'file path' => drupal_get_path('module', 'system'),
+    );
+
+    $items['admin/config/ksiegarnia/settings'] = array(
+        'title' => 'Ustawienia księgarni',
+        'description' => 'Dostosuj sposób funkcjonowania księgarni.',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('helion_ksiegarnia_admin_settings'),
+        'access arguments' => array('administer site configuration'),
+        'type' => MENU_NORMAL_ITEM,
+        'file' => 'helion_ksiegarnia.admin.inc',
+    );
+
+    return $items;
+}
+
+function helion_ksiegarnia_theme() {
+    return array(
+        "helion_ksiegarnia_opis_ksiazki" => array(
+            "template" => "tpl/opis-ksiazki"
+        ),
+        "helion_ksiegarnia_form_szukaj" => array(
+            "template" => "tpl/wyszukiwarka"
+        ),
+        "helion_ksiegarnia_listy_kategori" => array(
+            "template" => "tpl/listy-kategori"
+        ),
+        "helion_ksiegarnia_szczegolowy_opis_ksiazki" => array(
+            "template" => "tpl/szczegolowy-opis-ksiazki"
+        )
+    );
+}
+
+/* PONIZEJ DO REFAKTORYZACJI W POZNIEJSZYCH WERSJACH */
+
+/* LISTA KSIAZEK::BEGIN */
+
+function helion_ksiegarnia_lista_ksiazek($typ, $wydawnictwo) {
+    $lk = kategorieKsiazekDoWyswietlenia();
+
+    $html = '';
+
+    if (empty($html) && isset($typ) && isset($wydawnictwo)) {
+        $url = url(arg(0) . '/-marka-/', array('absolute' => FALSE));
+        $classSuffixDesc = '';
+        if ($typ == '1') {
+            $html .= '<h2 class="hk_title">' . t('Bestsellery') . '</h2>';
+            $searchParams = ' AND bestseller = 1';
+        }
+
+        if ($typ == '2') {
+            $html .= '<h2 class="hk_title">' . t('Nowości') . '</h2>';
+            $searchParams = ' AND nowosc = 1';
+        }
+
+
+        if ((in_array($typ, array(1, 2)) || (arg(2) && preg_match('/^szukaj-/', arg(2)))) && $lk != "wszystkie" && isset($lk[arg(1)])) {
+
+            $subKategorie_sql = "SELECT DISTINCT grupa_id FROM {helion_ksiegarnia_kategorie}";
+
+            $kat = join(",", $lk[arg(1)]);
+
+            if (!empty($kat))
+                $subKategorie_sql .= " WHERE title_id IN(" . $kat . ")";
+
+
+            $subKategorie_ids = db_query($subKategorie_sql);
+
+            $ids = "";
+            foreach ($subKategorie_ids as $sub)
+                if ($sub->grupa_id)
+                    $ids .= " kategorie LIKE '%," . $sub->grupa_id . ",%' OR ";
+            $ids = trim($ids, "OR ");
+
+            unset($subKategorie_sql, $subKategorie_ids);
+
+            $kat_ids = "";
+            foreach ($lk as $val)
+                foreach ($val as $kat_id) {
+                    $kat_ids .= " kategorie LIKE '%," . $kat_id . ",%' OR ";
+                }
+
+            $kat_ids = trim($kat_ids, "OR ") . " OR " . $ids;
+
+            if (!isset($searchParams))
+                $searchParams = "";
+
+            $searchParams .= " AND ({$kat_ids})";
+
+            $searchParams3 = $searchParams;
+        }
+
+        if ($typ == 3 && !preg_match('/^(ident|szukaj|autor)-/', arg(2))) {
+
+            $grupa_tematyczna_and = '';
+
+            if (arg(3) && !preg_match('/^(debug|ident|autor|szukaj)/', arg(3)))
+                $grupa_tematyczna_and = " AND grupa_seo = '" . arg(3) . "'";
+
+            $grupa_tematyczna = db_query("SELECT title_id,grupa_id FROM {helion_ksiegarnia_kategorie} WHERE title_seo = '" . arg(2) . "' " . $grupa_tematyczna_and);
+
+            $searchParams = ' AND (';
+
+            foreach ($grupa_tematyczna as $g)
+                $searchParams .= " kategorie LIKE '%," . ($g->grupa_id ? $g->grupa_id : $g->title_id) . ",%' OR ";
+
+            $searchParams = rtrim($searchParams, 'OR ') . ")";
+
+            if (in_array('force-update', arg()) || trim($searchParams) == 'AND ()')
+                $searchParams = '';
+        }
+        elseif ($typ == 3 && preg_match('/^ident-/', arg(2))) {
+            $searchParams = " AND LOWER(ident) = '" . preg_replace('/^ident-/', '', addslashes(arg(2))) . "' ";
+            $classSuffixDesc = "_desc";
+        } elseif ($typ == 3 && preg_match('/^autor-/', arg(2))) {
+            $searchParams = " AND autor LIKE '%" . preg_replace('/^autor-/', '', addslashes(arg(2))) . "%'";
+        } elseif ($typ == 3 && preg_match('/^szukaj-/', addslashes(arg(2)))) {
+
+
+            if (!isset($searchParams) || isset($searchParams3)) {
+                $patterns = preg_split("/(\s|\+)/", str_replace("szukaj-", "", addslashes(arg(2))));
+                    $searchParams = 'AND (';
+                    $searchParams .= _sqlSearchQueryBuilder($patterns, 'tytul', TRUE);
+                    $searchParams .= " OR " . _sqlSearchQueryBuilder($patterns, 'autor', TRUE);
+                    $searchParams .= " OR " . _sqlSearchQueryBuilder($patterns, 'opis', TRUE);
+                    $searchParams .= ")";
+                    
+                if (isset($searchParams3))
+                    $searchParams .= $searchParams3;
+            }
+        }
+
+        if (variable_get("helion_ksiegarnia_ebooki", 0))
+            $searchParams .= " AND typ = 2";
+
+        if ($typ < 3)
+            $searchParams .= ' ORDER BY RAND()';
+        elseif (!preg_match('/^ident-/', arg(2)))
+            $searchParams .= ' ORDER BY tytul';
+
+        if (empty($wydawnictwo))
+            $wydawnictwo = arg(1);
+
+        $wydawnictwo = addslashes($wydawnictwo);
+
+        $sql = "SELECT * FROM {helion_ksiegarnia} WHERE wydawnictwo = '" . $wydawnictwo . "' " . $searchParams;
+
+
+        if (in_array('debug', arg()))
+            print $sql;
+
+
+        if (db_driver() == 'pgsql')
+            $sql = preg_replace("/RAND\(\)/", "RANDOM()", $sql);
+
+        $q = db_query($sql);
+        $query = db_query($sql);
+
+        if (preg_match('/^7/', VERSION)) {
+            $rows = db_query(str_replace('ORDER BY tytul', '', str_replace('*', 'COUNT(ident)', $sql)))->fetchField();
+        }
+        else
+            $rows = db_result(db_query(str_replace('ORDER BY tytul', '', str_replace('*', 'COUNT(*)', $sql))));
+
+
+
+
+        $countBook = 0;
+        $countBookConfig = 4;
+        $books = array();
+        foreach ($q as $book) {
+
+            if (!in_array($book->ident, $books)) {
+                array_push($books, $book->ident);
+                //    $url = preg_replace('/-marka-/', $book->marka, $url);
+                $url = preg_replace('/-marka-/', $book->wydawnictwo, $url);
+
+                if ($typ < 3 && $countBook == $countBookConfig) {
+                    $html .= "<a href='/#' class='hk_books_hidden_href_{$typ} readmore'>pokaż wszytskie &raquo;</a>";
+                    $html .= "<div class='hk_books_hidden_{$typ}'>";
+                }
+
+                if ($typ > 2 && $countBook == 0) {
+                    $iloscStron = ceil($rows / variable_get('helion_ksiegarnia_ilosc_ksiazek_na_stronie', 10));
+                    if ($iloscStron > 1 && count($books) == 1) {
+                        $html .= "-pager-";
+                    }
+                    $html .="<div class='hk-page-per-page' " . (count($books) == 1 ? 'style="display:block;"' : '') . ">";
+                }
+
+                $autor = '';
+                $autorCount = 0;
+                foreach (preg_split("/,/", $book->autor) as $a) {
+                    if ($autorCount > 5 && !preg_match('/^ident-/', arg(2))) {
+                        $autor .= "...";
+                        break;
+                    }
+                    $a = addslashes(trim($a));
+                    $autor .= "<a href='" . $url . "autor-{$a}'>{$a}</a>, ";
+                    $autorCount++;
+                }
+                $autor = trim($autor, ", ");
+
+                $html .= ("<div class='hk_book{$classSuffixDesc}'>
+                    <div class='hk_cover{$classSuffixDesc}'>
+                        <a href='{$url}ident-{$book->ident}/'>
+                            <img src='{$book->okladka}' alt='" . addslashes($book->tytul) . "' />
+                        </a>        
+                    </div>
+                    <div class='hk_desc'>
+                        <a href='http://{$book->marka}.pl/add/" . variable_get('helion_ksiegarnia_helion_user_id', '') . "/" . strtoupper($book->ident) . "' class='hk_basket{$classSuffixDesc}' target='_blank'>
+                            <img src='" . variable_get('helion_ksiegarnia_koszyk', HK_PATH . 'gfx/koszszary.jpg') . "' alt='{$book->tytul}' />
+                        </a>                                
+                        <a href='{$url}ident-{$book->ident}/'><strong>{$book->tytul}</strong></a><br />
+                        Autor: {$autor}<br /><br />
+                        <span class='hk_cena'>Cena: {$book->cena} zł</span>&nbsp;&nbsp;&nbsp;");
+                if ($book->cena < $book->cena_detaliczna) {
+                    $html .= "<span class='hk_line_through'>{$book->cena_detaliczna} zł</span><br />";
+                    $oszczednosc = ($book->cena_detaliczna * $book->znizka) / 100;
+                    if (preg_match('/\.[0-9]$/', $oszczednosc))
+                        $oszczednosc .= '0';
+                    $html .= "Oszczędzasz: {$oszczednosc} zł";
+                }
+                $html .= "<br /><br />
+                        {desc}
+                    </div>";
+
+                if ($typ == 3 && preg_match('/^ident-/', arg(2))) {
+
+                    $html .= "<br /><br />" . $book->opis;
+
+                    $html = str_replace(
+                            '{desc}', theme("helion_ksiegarnia_szczegolowy_opis_ksiazki", array(
+                                "data" => $query->fetchObject(),
+                                "ebook_format_icon" => array(
+                                    "pdf" => HK_PATH . "gfx/icon1.png",
+                                    "epub" => HK_PATH . "gfx/epub.gif",
+                                    "mobi" => HK_PATH . 'gfx/mobi.gif'
+                                )
+                                    )
+                            ), $html
+                    );
+                } else {
+                    $html = str_replace('{desc}', '', $html);
+                }
+
+                $html .= "</div>";
+                $countBook++;
+                if ($typ > 2 && $countBook == variable_get('helion_ksiegarnia_ilosc_ksiazek_na_stronie', 10)) {
+                    $html .= "</div>";
+                    $countBook = 0;
+                }
+            }
+        }
+
+        if (count($books) > 1) {
+            $iloscStron = ceil(count($books) / variable_get('helion_ksiegarnia_ilosc_ksiazek_na_stronie', 10));
+            $pager = "<div class='pager'>";
+            for ($i = 0; $i < $iloscStron; $i++)
+                $pager .= "<div class='item'><a name='{$i}' id='page-{$i}' href='{$url}" . arg(2) . "#{$i}'>" . ($i + 1) . "</a></div>";
+            $pager .= "</div>";
+            $html = preg_replace("/-pager-/", $pager, $html);
+        }
+
+        if ($typ < 3 && $countBook > $countBookConfig)
+            $html .= '</div>';
+
+        if (count($books) == 0) {
+            $html = 'Brak kryteriów wyszukiwania. Lub problem z pobraniem listy pozycji z serwerów wydawnictwa HELION.<br />';
+            if (in_array($typ, array(1, 2)))
+                $html = "";
+        }
+    }
+    return $html;
+}
+
+/* LISTA KSIAZEK::END */
+
+function helion_ksiegarnia_init($wydawnictwo = '', $kategoria = '') {
+    
+    if ( arg(2) === "szukaj-" )
+        drupal_goto('ksiegarnia/' . variable_get('helion_ksiegarnia_podstawowa_ksiegarnia', 'helion'), array("absolute" => FALSE));
+    
+    $contentFromDB = FALSE;
+    if ($wydawnictwo != '') {
+        global $user;
+        $helion_ksiegarnia_update = new helion_ksiegarnia_update();
+        $helion_ksiegarnia_update->updateCategories($wydawnictwo, in_array("force-update", arg()) && in_array("administrator", $user->roles) ? TRUE : FALSE);
+        $helion_ksiegarnia_update->updateBooks($wydawnictwo, in_array("force-update", arg()) && in_array("administrator", $user->roles) ? TRUE : FALSE);
+        $contentFromDB = TRUE;
+    }
+
+    drupal_set_title(t("Wydawnictwo") . " " . ucfirst($wydawnictwo));
+    drupal_add_css(drupal_get_path('module', 'helion_ksiegarnia') . '/helion_ksiegarnia.css');
+    drupal_add_js(drupal_get_path('module', 'helion_ksiegarnia') . '/helion_ksiegarnia.js');
+
+    
+    
+    $cache = new cache(array(
+        "gzip" => variable_get("helion_ksiegarnia_buforowanie_kompresji", 0)
+    ));
+
+    $urls = join("-", arg());
+
+    if (
+            !variable_get('helion_ksiegarnia_buforowanie') ||
+            (!$cache->isCached($urls) && variable_get('helion_ksiegarnia_buforowanie'))
+    ) {
+
+        global $user;
+
+        if (arg(0) == 'ksiegarnia' && !arg(1)) {
+            drupal_goto('ksiegarnia/' . variable_get('helion_ksiegarnia_podstawowa_ksiegarnia', 'helion'), array(
+                "absolute" => FALSE
+            ));
+            exit;
+        }
+
+        $html = "<div id=\"hk_module\">";
+
+        if (variable_get("helion_ksiegarnia_wyszukiwarka", 0)) {
+            $html .= theme("helion_ksiegarnia_form_szukaj", array(
+                "img_src_submit" => variable_get('helion_ksiegarnia_wyszukaj', HK_PATH . 'gfx/szukaj2.gif'),
+                "url" => url(arg(0) . "/" . arg(1), array("absolute" => FALSE)),
+                "value" => preg_match("/^szukaj/", $kategoria) ? preg_replace("/(^szukaj)|(\+|-)/", "", arg(2)) : ""
+                    ));
+        }
+
+        $opcje = variable_get("helion_ksiegarnia_dodatkowe_ustawienia", array(
+            "opcja_1" => 0,
+            "opcja_2" => 0,
+            "opcja_3" => 0,
+                ));
+
+
+        $lk = kategorieKsiazekDoWyswietlenia();
+
+
+
+        if ($opcje["opcja_1"]) {
+            $html .= "<div class='hk_box'>";
+            $wydawnictwa = variable_get("wydawnictwa");
+            $html_wydawnictwa = "<span class='hk_label'>" . t('Księgarnie:') . " </span>";
+
+            foreach ($wydawnictwa as $w => $key) {
+                if (array_key_exists("wszystkie", $lk))
+                    $html_wydawnictwa .= "<a href='" . url(arg(0) . "/" . $w, array('absolute' => FALSE)) . "' class='" . (arg(1) == $w ? 'hk_checked' : '') . "'>" . ucfirst($key) . "</a>, ";
+                elseif (array_key_exists($key, $lk))
+                    $html_wydawnictwa .= "<a href='" . url(arg(0) . "/" . $w, array('absolute' => FALSE)) . "' class='" . (arg(1) == $w ? 'hk_checked' : '') . "'>" . ucfirst($key) . "</a>, ";
+            }
+
+            $html .= trim($html_wydawnictwa, ', ') . "<br />";
+            $html .= "</div>";
+        }
+
+        if ($opcje["opcja_2"]) {
+            $ebookpointSQL = '';
+            $html .= "<div class='hk_box'>";
+            $ilosc_kategori = db_query("SELECT DISTINCT COUNT(*) FROM {helion_ksiegarnia_kategorie} WHERE marka = :marka ORDER BY title", array(":marka" => arg(1)))->fetchField();
+            if ($ilosc_kategori > 0) {
+                $html .= "<span class='hk_label'>" . t('Kategorie:') . " </span>";
+                $q = db_query("SELECT DISTINCT title,title_seo,title_id FROM {helion_ksiegarnia_kategorie} WHERE marka = :marka ORDER BY title", array(":marka" => arg(1)));
+
+
+                foreach ($q as $kat) {
+                    if (array_key_exists("wszystkie", $lk))
+                        $html .= "<a href='" . url(arg(0) . "/" . arg(1) . "/" . $kat->title_seo, array('absolute' => FALSE)) . "' class='" . ($kat->title_seo == arg(2) ? 'hk_checked' : '') . "'>{$kat->title}</a>, ";
+                    elseif (@in_array($kat->title_id, $lk[arg(1)]))
+                        $html .= "<a href='" . url(arg(0) . "/" . arg(1) . "/" . $kat->title_seo, array('absolute' => FALSE)) . "' class='" . ($kat->title_seo == arg(2) ? 'hk_checked' : '') . "'>{$kat->title}</a>, ";
+                }
+                $html = trim($html, ', ');
+            }
+
+            if ((arg(1) == 'helion' || arg(1) == 'ebookpoint') && arg(2) && !preg_match('/^(ident|szukaj|autor)-/', arg(2))) {
+                $back_url = url(arg(0) . '/' . arg(1), array('absolute' => FALSE));
+                $html .= "<br /><br /><span class='hk_label'>" . t('Podkategorie:') . " </span>";
+
+                $q = db_query("SELECT DISTINCT title,title_seo,grupa,TRIM(grupa_seo) AS grupa_seo,opis FROM {helion_ksiegarnia_kategorie} WHERE marka = :marka AND title_seo = :grupa_seo ORDER BY title", array(":marka" => arg(1), ":grupa_seo" => arg(2)));
+                $opisKategori = '';
+                foreach ($q as $kat) {
+                    $html .= "<a href='" . url(arg(0) . "/" . arg(1) . "/" . $kat->title_seo . "/" . $kat->grupa_seo, array('absolute' => FALSE)) . "' class='" . ($kat->grupa_seo == arg(3) ? 'hk_checked' : '') . "'>{$kat->grupa}</a>, ";
+                    if ($kat->grupa_seo == arg(3) && $opisKategori == '')
+                        $opisKategori = $kat->opis;
+                }
+                $html = trim($html, ', ');
+            }
+            $html .= "</div>";
+            if (!empty($opisKategori))
+                $html .= $opisKategori . "<br /><br />";
+        }
+
+        if (!arg(2)) {
+            $html .= helion_ksiegarnia_lista_ksiazek(1, $wydawnictwo);
+            $html .= helion_ksiegarnia_lista_ksiazek(2, $wydawnictwo);
+        } elseif (arg(2)) {
+            $html .= helion_ksiegarnia_lista_ksiazek(3, arg(1));
+        }
+
+
+
+        $html .= "</div>";
+
+        if (variable_get('helion_ksiegarnia_buforowanie') && !$contentFromDB) {
+            $cache->save($html);
+        }            
+
+    }
+    else {
+        $html = $cache->getCached();
+        
+        if (variable_get('helion_ksiegarnia_buforowanie',0) && variable_get('helion_ksiegarnia_wyswietlaj_komunikaty', 0) && isset($user->roles) && in_array("administrator", $user->roles))
+            drupal_set_message(t('Dane pobrane z bufforu plikowego.'));
+    }
+    return $html;
+}

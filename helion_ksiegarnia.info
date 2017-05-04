@@ -1,0 +1,14 @@
+name        =   Księgarnia
+description =   "Moduł księgarni internetowej, pozwala na codzienną aktualizacje książek oferowanych przez księgarnie Helion, Onepress, Ebookpoint, Sensus, Septem, Bezdroża."
+package     =   Helion
+version     =   7.x-4
+core        =   7.x
+
+files[]     =   tpl/opis-ksiazki.tpl.php
+files[]     =   helion_ksiegarnia.admin.inc
+files[]     =   helion_ksiegarnia.install
+files[]     =   helion_ksiegarnia.module
+files[]     =   helion_ksiegarnia_update.php
+
+
+configure   =   admin/config/ksiegarnia/settings

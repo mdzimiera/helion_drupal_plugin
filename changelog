@@ -1,0 +1,13 @@
+TODO for helion_ksiegarnia
+==================================
+ 
+2012, 2013-03-03 Sebastian Karpeta  <sebastian@karpeta.org> a far far away
+
+2013-03-03 Sebastian Karpeta  <sebastian@karpeta.org>
+    * helion_ksiegarnia_update.php (nowy sposob pobierania i przetwarzania danych o ksiazkach)
+    * helion_ksiegarnia_module.php (zaimplementowano mozliwosc wyboru ksiegarni, kategori dla danych wydawnictw)
+    * cache.php (prosty system buforowania wynikow zapytan)
+
+2013-03-10 Sebastian Karpeta  <sebastian@karpeta.org>
+    * helion_ksiegarnia_module.php ( dodanie na poczatku funkcji helion_ksiegarnia_init() waldatora ktory sprawdza czy zapytanie wyszukiwania nie jest puste, jezeli jest modol przekieruje nas na strone glowna serwisu)
+    * helion_ksiegarnia.js (walidacja ilosci wprowadzanych liter w wyszukiwarce i ograniczenie ich do minimum 3 znakow)
