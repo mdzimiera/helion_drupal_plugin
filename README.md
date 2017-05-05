@@ -5,12 +5,13 @@ Księgarnie GW Helion w Drupalu 7!!!
 
 Wzbogać swoją stronę o ciekawe treści, w łatwy sposób stwórz własną, w pełni funkcjonalną księgarnię partnerską Grupy Wydawniczej Helion. Moduł Księgarni Internetowej w kilku prostych krokach pozwoli Ci na szybką implementację kopii wybranej z księgarni (Helion, Onepress, Sensus, Septem i Ebookpoint) na swojej stronie opartej o system CMS Drupal 7.
 
+Katalog "helion_drupal_plugin" należy umieścić w ścieżce "sites/all/modules".
+
 Moduł składa się z 4 części oraz sekcji administracyjnej:
 
 Moduł główny księgarni
 
 Dostęp do modułu następuje po podaniu w ścieżce adresu pozycji: http://{mojawitryna}/?q=ksiegarnia lub http://{mojawitryna}/ksiegarnia. Moduł ten zawiera dokładną kopię oferty wybranej księgarni (Helion, Onepress, Sensus, Septem i Ebookpoint) w formie prezentacji. Całość może być dowolnie zmieniana przez webmastera za pomocą arkuszy stylów.
-
 
 Prezentacja wybranych elementów księgarni
 

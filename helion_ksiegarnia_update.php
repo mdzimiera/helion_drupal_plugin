@@ -22,22 +22,31 @@ if (!class_exists("helion_ksiegarnia_update")):
                 "6" => 'bezdroza',
                 "8" => 'podrecznik',
                 "11" => 'bezdroża obce',
+                "13" => 'ebookpoint',
+                "17" => 'videopoint',
         );
 
         private function _timeToUpdate($wydawnictwo, $update = FALSE) {
             
             $date = db_query("SELECT CURDATE() AS curdate, update_time FROM {helion_ksiegarnia_update} WHERE marka = :marka", array(':marka' => $wydawnictwo))->fetchObject();
             
+            $currdate = "0000-00-00";
+            $update_time = "0000-00-00";
+                    
             if ( !$date ) {
                 
-                list($date->curdate, $date->update_time) = array(date("Y-m-d"), "");
+                list($currdate, $update_time) = array(date("Y-m-d"), "");
                 db_query("INSERT INTO {helion_ksiegarnia_update} VALUES(:marka, :update_time)", array(':marka' => $wydawnictwo, ':update_time'  => "0000-00-00"));
                 
             } else if ($date && $update) {
+                
+                $currdate = $date->curdate;
+                $update_time = $date->update_time;
+                
                 db_query("UPDATE {helion_ksiegarnia_update} SET update_time = :update_time WHERE marka = :marka", array(':update_time' => $date->curdate, ':marka' => $wydawnictwo));
             }
             
-            $ret = $date->curdate > $date->update_time ? TRUE : FALSE;
+            $ret = $currdate > $update_time ? TRUE : FALSE;
             return $ret;
             
         } // private function _timeToUpdate($wydawnictwo)
@@ -108,15 +117,58 @@ if (!class_exists("helion_ksiegarnia_update")):
                     
                     $ret = TRUE;
                     
-                    drupal_set_message(t('Zaktualizowano książki z ksiegarni :title.', array(':title' => ucfirst($wydawnictwo))));
+                    drupal_set_message(t('Zaktualizowano książki z księgarni :title.', array(':title' => ucfirst($wydawnictwo))));
                     
                     $this->xml = $this->_loadContextFromXml($wydawnictwo, "book");
-                    
+
                     if (db_query("DELETE FROM {helion_ksiegarnia} WHERE wydawnictwo = :wydawnictwo",array(':wydawnictwo' =>$wydawnictwo))) {
                         
+                        $fields = array('tytul', 'ident', 'wydawnictwo', 
+                            'marka', 'autor', 'tlumacz', 'status', 'cena', 
+                            'cena_detaliczna', 'znizka', 'liczbastron', 
+                            'datawydania', 'okladka', 'issueurl', 'link', 
+                            'bestseller', 'nowosc', 'opis', 'typ', 'kategorie', 
+                            'promocja', 'oprawa', 'ebook_format'
+                        );
+                        $values = array();
                         foreach ($this->xml->lista->ksiazka as $ksiazka) {
-                               
-                            $record = new stdClass();
+                            $e_format = "";
+                            if ((int) $ksiazka->typ == 2) {
+                                $ebook_format = '';
+                                foreach ($ksiazka->ebook_formaty->ebook_format as $format)
+                                    $ebook_format .= (string) $format . ",";
+                                $e_format  = trim($ebook_format,',');
+                            }
+                            
+                            $values[] = array(
+                                'tytul'             => (string) $ksiazka->tytul->attributes()->language == "polski" ? (string) $ksiazka->tytul :  (string) $ksiazka->tytul_orginal,
+                                'ident'             => strtolower((string) $ksiazka->ident),
+                                'wydawnictwo'       => $wydawnictwo,
+                                'marka'             => (string) $this->markaWydawnicza( (int) $ksiazka->marka),
+                                'autor'             => (string)  $ksiazka->autor,
+                                'tlumacz'           => (string)  $ksiazka->tlumacz,
+                                'status'            => (int) $ksiazka->status,
+                                'cena'              => (float) $ksiazka->cena,
+                                'cena_detaliczna'   => (float) $ksiazka->cenadetaliczna,
+                                'znizka'            => (int) $ksiazka->znizka,
+                                'liczbastron'       => (int) $ksiazka->liczbastron,
+                                'datawydania'       => (string) $ksiazka->datawydania,
+                                'okladka'           => (string) $ksiazka->okladka,
+                                'issueurl'          => (string) $ksiazka->issueurl,
+                                'link'              => (string) $ksiazka->link,
+                                'bestseller'        => (int) $ksiazka->bestseller,
+                                'nowosc'            => (int) $ksiazka->nowosc,
+                                'opis'              => (string) $ksiazka->opis,
+                                'typ'               => (int) $ksiazka->typ,
+                                'kategorie'         => "," . join(",", $this->kategorie_id($ksiazka)) . ",",
+                                'promocja'          => isset ($ksiazka->promocja) ? $ksiazka->promocja->attributes()->id : 0,
+                                'oprawa'            => (string) $ksiazka->oprawa,
+                                'ebook_format'      => $e_format,
+                            );
+                            
+                            /*
+                             *  too many queries
+                                $record = new stdClass();
                                 $record->tytul =  (string) $ksiazka->tytul->attributes()->language == "polski" ? (string) $ksiazka->tytul :  (string) $ksiazka->tytul_orginal;
                                 $record->ident  = strtolower((string) $ksiazka->ident);                
                                 $record->wydawnictwo = $wydawnictwo;
@@ -146,8 +198,17 @@ if (!class_exists("helion_ksiegarnia_update")):
                                     $record->ebook_format   =   trim($ebook_format,',');
                                 }    
                                 drupal_write_record('helion_ksiegarnia', $record);
-                                
+                            */  
                         }
+                        
+                        if (is_array($values) && count($values) > 0) {
+                            $query = db_insert('helion_ksiegarnia')->fields($fields);
+                            foreach ($values as $rec) {
+                                $query->values($rec);
+                            }
+                            $query->execute();
+                        }
+                        
                     }
                 }
                 
@@ -175,12 +236,12 @@ if (!class_exists("helion_ksiegarnia_update")):
         
         
         private function _loadContextFromXml($wydawnictwo, $categoryOrBooks = "category") {
-
+            
             $downloadUrl = sprintf($categoryOrBooks == "category" ? $this->categoryDownloadUrl : $this->booksDownloadUrl, $wydawnictwo);
-
+            
             $context = file_get_contents($downloadUrl);
             
-            return $context ? simplexml_load_string($context) : array_push($this->error, "Bląd pobrania kategorii z adresu {$downloadUrl}.");
+            return $context ? simplexml_load_string($context, 'SimpleXMLElement', LIBXML_COMPACT | LIBXML_PARSEHUGE) : array_push($this->error, "Bląd pobrania kategorii z adresu {$downloadUrl}.");
             
         } // private function _loadContextFromXml($wydawnictwo)
 

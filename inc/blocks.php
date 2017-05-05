@@ -27,7 +27,7 @@
         $wydawnictwo    = variable_get('helion_ksiegarnia_losowa_ksiazka_kategoria', 'helion');
         $title          = "";
         $additional_sql = "";
-    
+
         switch ($delta) {
             case    'helion_ksiegarnia_losowa_ksiazka': {
                 $title  = t("Polecana książka");
@@ -80,7 +80,7 @@
     if($book) {
         $block['content'] = theme("helion_ksiegarnia_opis_ksiazki",array(
             "data"              => $book,
-            "ident"             => variable_get('helion_ksiegarnia_helion_user_id')."/".strtoupper($book->ident),
+            "ident"             => variable_get('helion_ksiegarnia_helion_user_id')."/".$book->ident,
             "img_src_koszyk"    => variable_get('helion_ksiegarnia_koszyk','http://helion.pl/img/koszyk/koszszary.jpg'),
             "opcje"             => variable_get("helion_ksiegarnia_losowa_ksiazka_ustawienia",array(
                                         'tytul' => 1,

@@ -53,3 +53,30 @@ function doForceUpdate($wydawnictwo) {
 }
 
 // function doForceUpdate($wydawnictwo) {
+   
+function getTypeByIdent($ident){
+        
+    $_type = array(
+        1 => 'Książka',
+        2 => 'Ebook',
+        3 => 'Audiobook mp3',
+        4 => 'Audiocd mp3',
+        8 => 'Wideokurs',
+        );
+    
+    $type = 1;
+    if(preg_match('/\_ebook$/i', $ident)){
+        $type = 2;
+    }elseif(preg_match('/\_a$/i', $ident)){
+        $type = 3;
+    }elseif(preg_match('/\_3$/i', $ident)){
+        $type = 4;
+    }elseif(preg_match('/\_w$/i', $ident)){
+        $type = 8;
+    }else{
+        $type = 1;
+    }
+
+    return $_type["$type"];
+        
+}

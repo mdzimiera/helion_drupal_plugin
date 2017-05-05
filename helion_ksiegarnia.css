@@ -18,6 +18,8 @@ h2.hk_title {
     display:block;
     font-size: 11px;
     vertical-align: top;
+    position: relative;
+    padding: 20px 0;
 }
 
 
@@ -52,6 +54,64 @@ h2.hk_title {
     color:#fff;
 }
 
+.hk_helion_box {
+    position: absolute;
+    bottom: 5px;
+}
+.hk_details {
+    position: relative;
+    bottom: 0;
+}
+.hk_helion_box a::after, 
+.hk_helion_box a::before {
+    content: " ";
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    top: 3px;
+}
+.hk_helion_box a {
+    box-shadow: none;
+    background-color: #f0f0f0;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding-left: 50px;
+    padding-right: 20px;
+    font-size: 16px;
+    display: inline-block;
+    height: 100%;
+    line-height: 36px;
+    position: relative;
+    text-decoration: none;
+    color: #000;
+}
+.hk_helion_box a:hover {
+    color: #fff;
+    background-color: #e4001e;
+    border: 1px solid #e6001e;
+    border-radius: 4px;
+    box-shadow: none;
+}
+.hk_helion_box a:hover:before {
+    opacity:0;
+}
+.hk_helion_box a:hover:after {
+    opacity:1;
+}
+.hk_helion_box a::before {
+    left: 8px;
+    background: transparent url(https://static01.helion.com.pl/helion/images/helion.svg) no-repeat -426px -321px;
+}
+.hk_helion_box a::after {
+    left: 8px;
+    background: transparent url(https://static01.helion.com.pl/helion/images/helion.svg) no-repeat -337px -321px;
+    opacity: 0;
+}
+
+.hk_tags { list-style-type: none; margin: 0 !important; padding: 0 !important; }
+.hk_tags .tag-new { background-color: #78cc5b; color: #fff; }
+.hk_tags .tag-bestseller { background-color: #5b9bcc; color: #fff; }
+.hk_tags .tag-new, .hk_tags .tag-bestseller { display: inline-block; padding: 0 10px; line-height: 25px; }
 
 /* PONIZEJ UMIESZCZAMY ZMIANY POZYCJI I WIELKOSCI */
 
@@ -98,6 +158,7 @@ h2.hk_title {
 
 .hk_book_single {
     text-align: center;
+    position: relative;
 }
 
 .hk_book_single .hk_basket {
@@ -108,7 +169,7 @@ h2.hk_title {
 .hk_book,.hk_book_desc {
    display:inline-block;    
    min-height:176px;
-   margin-bottom: 60px;
+   margin-bottom: 40px;
    vertical-align: top;
    width:50%;
    

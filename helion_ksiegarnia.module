@@ -93,7 +93,7 @@ function helion_ksiegarnia_lista_ksiazek($typ, $wydawnictwo) {
 
             $subKategorie_sql = "SELECT DISTINCT grupa_id FROM {helion_ksiegarnia_kategorie}";
 
-            $kat = join(",", $lk[arg(1)]);
+            $kat = trim(join(",", $lk[arg(1)]), ",");
 
             if (!empty($kat))
                 $subKategorie_sql .= " WHERE title_id IN(" . $kat . ")";
@@ -211,7 +211,7 @@ function helion_ksiegarnia_lista_ksiazek($typ, $wydawnictwo) {
                 $url = preg_replace('/-marka-/', $book->wydawnictwo, $url);
 
                 if ($typ < 3 && $countBook == $countBookConfig) {
-                    $html .= "<a href='/#' class='hk_books_hidden_href_{$typ} readmore'>pokaż wszytskie &raquo;</a>";
+                    $html .= "<a href='/#' class='hk_books_hidden_href_{$typ} readmore'>pokaż wszystkie &raquo;</a>";
                     $html .= "<div class='hk_books_hidden_{$typ}'>";
                 }
 
@@ -231,11 +231,13 @@ function helion_ksiegarnia_lista_ksiazek($typ, $wydawnictwo) {
                         break;
                     }
                     $a = addslashes(trim($a));
-                    $autor .= "<a href='" . $url . "autor-{$a}'>{$a}</a>, ";
+                    $autor .= "<a href='" . $url . "autor-{$a}' title='{$a}'>{$a}</a>, ";
                     $autorCount++;
                 }
                 $autor = trim($autor, ", ");
-
+                /*<a href='http:{$book->marka}.pl/add/" . variable_get('helion_ksiegarnia_helion_user_id', '') . "/" . strtoupper($book->ident) . "' class='hk_basket{$classSuffixDesc}' target='_blank'>
+                            <img src='" . variable_get('helion_ksiegarnia_koszyk', HK_PATH . 'gfx/koszszary.jpg') . "' alt='{$book->tytul}' />
+                </a>*/
                 $html .= ("<div class='hk_book{$classSuffixDesc}'>
                     <div class='hk_cover{$classSuffixDesc}'>
                         <a href='{$url}ident-{$book->ident}/'>
@@ -243,10 +245,10 @@ function helion_ksiegarnia_lista_ksiazek($typ, $wydawnictwo) {
                         </a>        
                     </div>
                     <div class='hk_desc'>
-                        <a href='http://{$book->marka}.pl/add/" . variable_get('helion_ksiegarnia_helion_user_id', '') . "/" . strtoupper($book->ident) . "' class='hk_basket{$classSuffixDesc}' target='_blank'>
-                            <img src='" . variable_get('helion_ksiegarnia_koszyk', HK_PATH . 'gfx/koszszary.jpg') . "' alt='{$book->tytul}' />
-                        </a>                                
-                        <a href='{$url}ident-{$book->ident}/'><strong>{$book->tytul}</strong></a><br />
+                        <div class='hk_helion_box'>
+                            <a href='http://{$book->marka}.pl/add/" . variable_get('helion_ksiegarnia_helion_user_id', '') . "/" . $book->ident . "' target='_blank' title='Kup teraz'>Kup teraz</a>
+                        </div>    
+                        <a href='{$url}ident-{$book->ident}/' title='{$book->tytul}'><strong>{$book->tytul}</strong></a><br />
                         Autor: {$autor}<br /><br />
                         <span class='hk_cena'>Cena: {$book->cena} zł</span>&nbsp;&nbsp;&nbsp;");
                 if ($book->cena < $book->cena_detaliczna) {
@@ -259,10 +261,10 @@ function helion_ksiegarnia_lista_ksiazek($typ, $wydawnictwo) {
                 $html .= "<br /><br />
                         {desc}
                     </div>";
-
+                $html .= "</div>";
                 if ($typ == 3 && preg_match('/^ident-/', arg(2))) {
 
-                    $html .= "<br /><br />" . $book->opis;
+                    $html .= "<div>" . $book->opis . "</div>";
 
                     $html = str_replace(
                             '{desc}', theme("helion_ksiegarnia_szczegolowy_opis_ksiazki", array(
@@ -278,8 +280,7 @@ function helion_ksiegarnia_lista_ksiazek($typ, $wydawnictwo) {
                 } else {
                     $html = str_replace('{desc}', '', $html);
                 }
-
-                $html .= "</div>";
+             
                 $countBook++;
                 if ($typ > 2 && $countBook == variable_get('helion_ksiegarnia_ilosc_ksiazek_na_stronie', 10)) {
                     $html .= "</div>";
@@ -379,15 +380,15 @@ function helion_ksiegarnia_init($wydawnictwo = '', $kategoria = '') {
 
             foreach ($wydawnictwa as $w => $key) {
                 if (array_key_exists("wszystkie", $lk))
-                    $html_wydawnictwa .= "<a href='" . url(arg(0) . "/" . $w, array('absolute' => FALSE)) . "' class='" . (arg(1) == $w ? 'hk_checked' : '') . "'>" . ucfirst($key) . "</a>, ";
+                    $html_wydawnictwa .= "<a href='" . url(arg(0) . "/" . $w, array('absolute' => FALSE)) . "' class='" . (arg(1) == $w ? 'hk_checked' : '') . "' title='" . ucfirst($key) . "'>" . ucfirst($key) . "</a>, ";
                 elseif (array_key_exists($key, $lk))
-                    $html_wydawnictwa .= "<a href='" . url(arg(0) . "/" . $w, array('absolute' => FALSE)) . "' class='" . (arg(1) == $w ? 'hk_checked' : '') . "'>" . ucfirst($key) . "</a>, ";
+                    $html_wydawnictwa .= "<a href='" . url(arg(0) . "/" . $w, array('absolute' => FALSE)) . "' class='" . (arg(1) == $w ? 'hk_checked' : '') . "' title='" . ucfirst($key) ."'>" . ucfirst($key) . "</a>, ";
             }
 
             $html .= trim($html_wydawnictwa, ', ') . "<br />";
             $html .= "</div>";
         }
-
+        
         if ($opcje["opcja_2"]) {
             $ebookpointSQL = '';
             $html .= "<div class='hk_box'>";
@@ -399,9 +400,9 @@ function helion_ksiegarnia_init($wydawnictwo = '', $kategoria = '') {
 
                 foreach ($q as $kat) {
                     if (array_key_exists("wszystkie", $lk))
-                        $html .= "<a href='" . url(arg(0) . "/" . arg(1) . "/" . $kat->title_seo, array('absolute' => FALSE)) . "' class='" . ($kat->title_seo == arg(2) ? 'hk_checked' : '') . "'>{$kat->title}</a>, ";
+                        $html .= "<a href='" . url(arg(0) . "/" . arg(1) . "/" . $kat->title_seo, array('absolute' => FALSE)) . "' class='" . ($kat->title_seo == arg(2) ? 'hk_checked' : '') . "' title='" . $kat->title . "'>{$kat->title}</a>, ";
                     elseif (@in_array($kat->title_id, $lk[arg(1)]))
-                        $html .= "<a href='" . url(arg(0) . "/" . arg(1) . "/" . $kat->title_seo, array('absolute' => FALSE)) . "' class='" . ($kat->title_seo == arg(2) ? 'hk_checked' : '') . "'>{$kat->title}</a>, ";
+                        $html .= "<a href='" . url(arg(0) . "/" . arg(1) . "/" . $kat->title_seo, array('absolute' => FALSE)) . "' class='" . ($kat->title_seo == arg(2) ? 'hk_checked' : '') . "' title='" . $kat->title . "'>{$kat->title}</a>, ";
                 }
                 $html = trim($html, ', ');
             }

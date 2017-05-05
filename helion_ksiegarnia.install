@@ -12,6 +12,7 @@ function helion_ksiegarnia_enable() {
         'sensus' => t('sensus'),
         'septem' => t('septem'),
         'bezdroza' => t('bezdroza'),
+        'videopoint' => t('videopoint')
     );
 
     variable_set('wydawnictwa', $wydawnictwa);

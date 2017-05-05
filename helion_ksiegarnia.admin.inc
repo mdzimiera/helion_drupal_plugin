@@ -68,7 +68,7 @@ function helion_ksiegarnia_admin_settings() {
         '#type' => 'select',
         '#title' => t('Sposób wyświetlania'),
         '#options' => array('0' => 'wszystkie książki', '1' => 'tylko eBooki'),
-        '#description' => t('Umożliwia prezętacje tylko i wyłącznie eBooków lub całości asortymentu.'),
+        '#description' => t('Umożliwia prezentację tylko i wyłącznie eBooków lub całości asortymentu.'),
         '#default_value' => variable_get('helion_ksiegarnia_ebooki', '0'),
     );
 
@@ -104,23 +104,23 @@ function helion_ksiegarnia_admin_settings() {
         '#type' => 'select',
         '#title' => t('Kategoria dotycząca polecanej książki'),
         '#options' => $wydawnictwa_2,
-        '#description' => t('Wyświetla polecaną książke ograniczjąc się wyłącznie do wybranej kategori z listy.'),
+        '#description' => t('Wyświetla polecaną książke ograniczając się wyłącznie do wybranej kategorii z listy.'),
         '#default_value' => variable_get('helion_ksiegarnia_losowa_ksiazka_kategoria', 'wszystkie'),
     );
 
-    $form['helion_ksiegarnia_losowa_ksiazka']['helion_ksiegarnia_promocja_kategoria'] = array(
+    $form['helion_ksiegarnia_losowa_ksiazka']['helion_ksiegarnia_promocja_dnia_kategoria'] = array(
         '#type' => 'select',
         '#title' => t('Promocja dnia'),
         '#options' => $wydawnictwa_1,
-        '#description' => t('Wyświetla pozycje będącą w promocji dnia ograniczjąc się wyłącznie do wybranej kategori z listy.'),
-        '#default_value' => variable_get('helion_ksiegarnia_promocja_kategoria', 'wszystkie'),
+        '#description' => t('Wyświetla pozycję będącą w promocji dnia ograniczając się wyłącznie do wybranej kategorii z listy.'),
+        '#default_value' => variable_get('helion_ksiegarnia_promocja_dnia_kategoria', 'wszystkie'),
     );
 
     $form['helion_ksiegarnia_losowa_ksiazka']['helion_ksiegarnia_bestseller_kategoria'] = array(
         '#type' => 'select',
         '#title' => t('Bestseller'),
         '#options' => $wydawnictwa_1,
-        '#description' => t('Wyświetla bestsellery ograniczjąc się wyłącznie do wybranej kategori z listy.'),
+        '#description' => t('Wyświetla bestsellery ograniczając się wyłącznie do wybranej kategorii z listy.'),
         '#default_value' => variable_get('helion_ksiegarnia_bestseller_kategoria', 'wszystkie'),
     );
 
@@ -132,7 +132,7 @@ function helion_ksiegarnia_admin_settings() {
             'tytul' => t('wyświetl tytuł'),
             'koszyk' => t('koszyk'),
         ),
-        '#description' => t('Pozwala na załączenie do polecanej książki oprócz okładki takze, cenę, tytuł oraz link do koszyka.'),
+        '#description' => t('Pozwala na załączenie do polecanej książki oprócz okładki także, cenę, tytuł oraz link do koszyka.'),
         '#default_value' => variable_get('helion_ksiegarnia_losowa_ksiazka_ustawienia', array("cena", "tytul", "koszyk")),
     );
 
@@ -145,28 +145,28 @@ function helion_ksiegarnia_admin_settings() {
 
     $form['helion_ksiegarnia_ikony']['helion_ksiegarnia_koszyk'] = array(
         '#type' => 'textfield',
-        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikone dodającą przedmiot do koszyka.'),
+        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikonę dodającą przedmiot do koszyka.'),
         '#default_value' => variable_get('helion_ksiegarnia_koszyk', "{$path}gfx/koszszary.jpg"),
         '#size' => 50
     );
 
     $form['helion_ksiegarnia_ikony']['helion_ksiegarnia_bestseller'] = array(
         '#type' => 'textfield',
-        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikone bestsellera.'),
+        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikonę bestsellera.'),
         '#default_value' => variable_get('helion_ksiegarnia_bestseller', "{$path}gfx/bestseller.gif"),
         '#size' => 50
     );
 
     $form['helion_ksiegarnia_ikony']['helion_ksiegarnia_nowosc'] = array(
         '#type' => 'textfield',
-        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikone nowości.'),
+        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikonę nowości.'),
         '#default_value' => variable_get('helion_ksiegarnia_nowosc', "{$path}gfx/nowosc.gif"),
         '#size' => 50
     );
 
     $form['helion_ksiegarnia_ikony']['helion_ksiegarnia_wyszukaj'] = array(
         '#type' => 'textfield',
-        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikone klawisza wyszukiwania.'),
+        '#description' => t('Scieżka do pliku graficznego przedstawiającego ikonę klawisza wyszukiwania.'),
         '#default_value' => variable_get('helion_ksiegarnia_wyszukaj', "{$path}gfx/szukaj2.gif"),
         '#size' => 50
     );
@@ -174,7 +174,7 @@ function helion_ksiegarnia_admin_settings() {
     $form['helion_ksiegarnia_cache'] = array(
         '#title' => t('Buforowanie stron'),
         '#type' => 'fieldset',
-        '#description' => t('Opcja eksperymentalna, zapisuje odwiedzane strony w specjalnym buforze, dzieki czemu dostep do nich jest duzo szybszy przy nastepnym odwiedzeniu tej samej książki.')
+        '#description' => t('Opcja eksperymentalna, zapisuje odwiedzane strony w specjalnym buforze, dzięki czemu dostęp do nich jest dużo szybszy przy następnym odwiedzeniu tej samej książki.')
     );    
         
     $form['helion_ksiegarnia_cache']['helion_ksiegarnia_buforowanie'] = array(
