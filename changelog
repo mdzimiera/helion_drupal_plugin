@@ -11,3 +11,7 @@ TODO for helion_ksiegarnia
 2013-03-10 Sebastian Karpeta  <sebastian@karpeta.org>
     * helion_ksiegarnia_module.php ( dodanie na poczatku funkcji helion_ksiegarnia_init() waldatora ktory sprawdza czy zapytanie wyszukiwania nie jest puste, jezeli jest modol przekieruje nas na strone glowna serwisu)
     * helion_ksiegarnia.js (walidacja ilosci wprowadzanych liter w wyszukiwarce i ograniczenie ich do minimum 3 znakow)
+
+2017-05-05 Marek Dzimiera <marcus.dzimiera@gmail.com>
+    * dodanie wideokursów
+    * poprawki css, zmiana ikon
